@@ -1,8 +1,18 @@
 package trie
 
 import (
+	"bufio"
+	"flag"
+	"log"
+	"os"
 	"testing"
 )
+
+var path string
+
+func init() {
+	flag.StringVar(&path, "path", "", "Path to file with words")
+}
 
 func TestTrieASCII(t *testing.T) {
 	var got bool
@@ -93,5 +103,35 @@ func TestTrieUnicode(t *testing.T) {
 	want = true
 	if got != want {
 		t.Errorf("obj.Search(\"बैंगलोर\") = %v, want %v", got, want)
+	}
+}
+
+func readWords() {
+	flag.Parse()
+	if path == "" {
+		return
+	}
+
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	obj := Make()
+	for scanner.Scan() {
+		obj.Insert(scanner.Text())
+		obj.Search(scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func BenchmarkTrie(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		readWords()
 	}
 }
